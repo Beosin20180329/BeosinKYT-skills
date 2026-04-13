@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Beosin KYT/KYA API 调用脚本
-用于区块链地址和交易的风险评估
+Beosin KYT/KYA API Call Script
+For blockchain address and transaction risk assessment
 
-支持版本: V2, V3, V4
-认证方式: V2/V3 使用 Header 认证, V4 需要 SIGN 认证
+Supported versions: V2, V3, V4
+Authentication: V2/V3 uses Header auth, V4 requires SIGN auth
 """
 
 import requests
@@ -216,8 +216,8 @@ def format_risk_result(result: Dict[str, Any], assessment_type: str = "address",
     if result.get("code") != 200:
         msg = result.get("msg", "Unknown error")
         if "Empty" in msg:
-            return f"❌ API 调用失败: {msg}\n💡 提示: 请确保使用 HTTP Header 传递 APPID 和 APP-SECRET"
-        return f"❌ API 调用失败: {msg}"
+            return f"❌ API call failed: {msg}\n💡 Tip: Make sure to pass APPID and APP-SECRET via HTTP Header"
+        return f"❌ API call failed: {msg}"
 
     data = result.get("data", {})
     output = []
@@ -227,15 +227,15 @@ def format_risk_result(result: Dict[str, Any], assessment_type: str = "address",
         risk_level = data.get("riskLevel", "Unknown")
         level_emoji = {"Severe": "🔴", "High": "🟠", "Medium": "🟡", "Low": "🟢"}.get(risk_level, "⚪")
 
-        output.append(f"📊 地址风险评估结果 (API {api_version})")
-        output.append(f"风险评分: {score}")
-        output.append(f"风险等级: {level_emoji} {risk_level}")
+        output.append(f"📊 Address Risk Assessment Result (API {api_version})")
+        output.append(f"Risk Score: {score}")
+        output.append(f"Risk Level: {level_emoji} {risk_level}")
 
         incoming_score = data.get("incomingScore")
         incoming_level = data.get("incomingLevel")
         if incoming_score is not None:
-            output.append(f"\n📥 入金风险:")
-            output.append(f"  评分: {incoming_score}, 等级: {incoming_level}")
+            output.append(f"\n📥 Incoming Risk:")
+            output.append(f"  Score: {incoming_score}, Level: {incoming_level}")
 
         incoming = data.get("incomingDetail", [])
         if incoming:
@@ -252,25 +252,25 @@ def format_risk_result(result: Dict[str, Any], assessment_type: str = "address",
                         rd_name = rd.get("riskName", "Unknown")
                         rd_rate = rd.get("rate", rate)
                         rd_amount = rd.get("amount", amount)
-                        output.append(f"  - {strategy} ({rd_name}) | 跳数: {hops} | 暴露: {exposure} | 比例: {rd_rate*100:.2f}% | 金额: {rd_amount}")
+                        output.append(f"  - {strategy} ({rd_name}) | Hops: {hops} | Exposure: {exposure} | Ratio: {rd_rate*100:.2f}% | Amount: {rd_amount}")
                 else:
-                    output.append(f"  - {strategy} | 跳数: {hops} | 暴露: {exposure} | 比例: {rate*100:.2f}% | 金额: {amount}")
+                    output.append(f"  - {strategy} | Hops: {hops} | Exposure: {exposure} | Ratio: {rate*100:.2f}% | Amount: {amount}")
 
                 entity_details = item.get("entityDetails", [])
                 if entity_details:
-                    output.append(f"    实体详情:")
+                    output.append(f"    Entity Details:")
                     for entity in entity_details:
                         entity_name = entity.get("entityName", "Unknown")
                         entity_hops = entity.get("hops", "N/A")
                         purification_amount = entity.get("purificationAmountU", 0)
                         purification_rate = entity.get("purificationRate", 0)
-                        output.append(f"      - {entity_name} (跳数: {entity_hops}, 金额: {purification_amount}, 比例: {purification_rate*100:.4f}%)")
+                        output.append(f"      - {entity_name} (Hops: {entity_hops}, Amount: {purification_amount}, Ratio: {purification_rate*100:.4f}%)")
 
         outgoing_score = data.get("outgoingScore")
         outgoing_level = data.get("outgoingLevel")
         if outgoing_score is not None:
-            output.append(f"\n📤 出金风险:")
-            output.append(f"  评分: {outgoing_score}, 等级: {outgoing_level}")
+            output.append(f"\n📤 Outgoing Risk:")
+            output.append(f"  Score: {outgoing_score}, Level: {outgoing_level}")
 
         outgoing = data.get("outgoingDetail", [])
         if outgoing:
@@ -287,40 +287,40 @@ def format_risk_result(result: Dict[str, Any], assessment_type: str = "address",
                         rd_name = rd.get("riskName", "Unknown")
                         rd_rate = rd.get("rate", rate)
                         rd_amount = rd.get("amount", amount)
-                        output.append(f"  - {strategy} ({rd_name}) | 跳数: {hops} | 暴露: {exposure} | 比例: {rd_rate*100:.2f}% | 金额: {rd_amount}")
+                        output.append(f"  - {strategy} ({rd_name}) | Hops: {hops} | Exposure: {exposure} | Ratio: {rd_rate*100:.2f}% | Amount: {rd_amount}")
                 else:
-                    output.append(f"  - {strategy} | 跳数: {hops} | 暴露: {exposure} | 比例: {rate*100:.2f}% | 金额: {amount}")
+                    output.append(f"  - {strategy} | Hops: {hops} | Exposure: {exposure} | Ratio: {rate*100:.2f}% | Amount: {amount}")
 
                 entity_details = item.get("entityDetails", [])
                 if entity_details:
-                    output.append(f"    实体详情:")
+                    output.append(f"    Entity Details:")
                     for entity in entity_details:
                         entity_name = entity.get("entityName", "Unknown")
                         entity_hops = entity.get("hops", "N/A")
                         purification_amount = entity.get("purificationAmountU", 0)
                         purification_rate = entity.get("purificationRate", 0)
-                        output.append(f"      - {entity_name} (跳数: {entity_hops}, 金额: {purification_amount}, 比例: {purification_rate*100:.4f}%)")
+                        output.append(f"      - {entity_name} (Hops: {entity_hops}, Amount: {purification_amount}, Ratio: {purification_rate*100:.4f}%)")
 
         risk_tag_level = data.get("riskTagLevel")
         if risk_tag_level:
-            output.append(f"\n🏷️ 风险标签等级: {risk_tag_level}")
+            output.append(f"\n🏷️ Risk Tag Level: {risk_tag_level}")
             risk_tag_details = data.get("riskTagDetails", [])
             if risk_tag_details:
-                output.append(f"  标签: {', '.join(risk_tag_details)}")
+                output.append(f"  Tags: {', '.join(risk_tag_details)}")
 
     elif assessment_type in ["deposit", "withdraw"]:
         score = data.get("score", 0)
         risk_level = data.get("riskLevel", "Unknown")
         level_emoji = {"Severe": "🔴", "High": "🟠", "Medium": "🟡", "Low": "🟢"}.get(risk_level, "⚪")
 
-        direction = "📥 存款" if assessment_type == "deposit" else "📤 提款"
-        output.append(f"{direction}交易风险评估结果 (API {api_version})")
-        output.append(f"风险评分: {score}")
-        output.append(f"风险等级: {level_emoji} {risk_level}")
+        direction = "📥 Deposit" if assessment_type == "deposit" else "📤 Withdraw"
+        output.append(f"{direction} Transaction Risk Assessment Result (API {api_version})")
+        output.append(f"Risk Score: {score}")
+        output.append(f"Risk Level: {level_emoji} {risk_level}")
 
         risks = data.get("risks", [])
         if risks:
-            output.append("\n命中风险:")
+            output.append("\nHit Risks:")
             for risk in risks:
                 strategy = risk.get("riskStrategy", "Unknown")
                 risk_lvl = risk.get("riskLevel", "Unknown")
@@ -328,29 +328,29 @@ def format_risk_result(result: Dict[str, Any], assessment_type: str = "address",
                 exposure = risk.get("exposure", "N/A")
                 rate = risk.get("rate", 0)
                 amount = risk.get("amount", 0)
-                output.append(f"  - {strategy} | 等级: {risk_lvl} | 跳数: {hops} | 暴露: {exposure} | 比例: {rate*100:.2f}% | 金额: {amount}")
+                output.append(f"  - {strategy} | Level: {risk_lvl} | Hops: {hops} | Exposure: {exposure} | Ratio: {rate*100:.2f}% | Amount: {amount}")
 
                 entity_details = risk.get("entityDetails", [])
                 if entity_details:
-                    output.append(f"    实体详情:")
+                    output.append(f"    Entity Details:")
                     for entity in entity_details:
                         entity_name = entity.get("entityName", "Unknown")
                         entity_hops = entity.get("hops", "N/A")
                         purification_amount = entity.get("purificationAmountU", 0)
                         purification_rate = entity.get("purificationRate", 0)
-                        output.append(f"      - {entity_name} (跳数: {entity_hops}, 金额: {purification_amount}, 比例: {purification_rate*100:.4f}%)")
+                        output.append(f"      - {entity_name} (Hops: {entity_hops}, Amount: {purification_amount}, Ratio: {purification_rate*100:.4f}%)")
 
     return "\n".join(output)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Beosin KYT/KYA API 调用工具")
+    parser = argparse.ArgumentParser(description="Beosin KYT/KYA API Call Tool")
     parser.add_argument("--appid", "-i", help="Beosin API APPID")
     parser.add_argument("--secret", "-s", help="Beosin API APP-SECRET")
-    parser.add_argument("command", nargs="?", help="命令: address-v3, address-v4, deposit-v3, deposit-v4, withdraw-v3, withdraw-v4")
-    parser.add_argument("param1", nargs="?", help="chain_id 或 tx_hash")
-    parser.add_argument("param2", nargs="?", help="address 或 token")
-    parser.add_argument("param3", nargs="?", help="token (可选)")
+    parser.add_argument("command", nargs="?", help="Command: address-v3, address-v4, deposit-v3, deposit-v4, withdraw-v3, withdraw-v4")
+    parser.add_argument("param1", nargs="?", help="chain_id or tx_hash")
+    parser.add_argument("param2", nargs="?", help="address or token")
+    parser.add_argument("param3", nargs="?", help="token (optional)")
     
     args = parser.parse_args()
     
@@ -366,8 +366,8 @@ if __name__ == "__main__":
     app_secret = args.secret
     
     if not app_id or not app_secret:
-        print("错误: 请通过 --appid 和 --secret 参数提供 API 密钥")
-        print("示例: python beosin_api.py --appid YOUR_APPID --secret YOUR_SECRET address-v4 79 0x...")
+        print("Error: Please provide API keys via --appid and --secret parameters")
+        print("Example: python beosin_api.py --appid YOUR_APPID --secret YOUR_SECRET address-v4 79 0x...")
         sys.exit(1)
 
     command = args.command

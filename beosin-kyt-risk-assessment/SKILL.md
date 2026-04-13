@@ -1,104 +1,148 @@
 ---
 name: beosin-kyt-risk-assessment
-description: Beosin KYT/KYA 区块链风险评估 Skill。当用户需要评估区块链地址或交易的风险等级时触发，包括地址风险评估、交易风险评估（存款/提款）等场景。使用此 Skill 帮助用户进行区块链合规和反洗钱风险分析。
+description: Beosin KYT/KYA Blockchain Risk Assessment Skill. Triggered when users need to assess the risk level of blockchain addresses or tokens (such as SHIB, USDT, USDC), including address risk assessment, transaction risk assessment (deposit/withdraw), token risk query and other scenarios. Use this Skill to help users with blockchain compliance and anti-money laundering risk analysis. If the user only provides the token name without an address, you must first look up the token contract address from currency_basket_output.json before calling the API.
 ---
 
-# Beosin KYT/KYA 区块链风险评估 Skill
+# Beosin KYT/KYA Blockchain Risk Assessment Skill
 
-## 快速开始
+## Quick Start
 
-⚡️ **最简调用方式（一行命令完成）**：
+⚡️ **Minimal usage (one-liner)**:
 
 ```bash
-# 地址风险评估 (Tron 链)
+# Address risk assessment (Tron chain)
 python scripts/beosin_api.py --appid YOUR_APPID --secret YOUR_SECRET address-v4 79 TNpK4NKPQTQsvMj4aDGR5nxabvFKWJ3m2E
 
-# 存款交易风险评估
+# Deposit transaction risk assessment
 python scripts/beosin_api.py --appid YOUR_APPID --secret YOUR_SECRET deposit-v4 1 0x...
 
-# 提款交易风险评估
+# Withdraw transaction risk assessment
 python scripts/beosin_api.py --appid YOUR_APPID --secret YOUR_SECRET withdraw-v4 1 0x...
 ```
 
-**完整流程（3 步）：**
-1. 获取 API 密钥（向用户请求 APPID 和 APP-SECRET）
-2. 一行命令调用脚本
-3. 解析 JSON 结果并生成风险评估报告
+**Full workflow (3 steps)**:
+1. Get API keys (request APPID and APP-SECRET from user)
+2. Call script with one command
+3. Parse JSON results and generate risk assessment report
 
-## 概述
+## Overview
 
-此 Skill 用于调用 Beosin KYT (Know Your Transaction) 和 KYA (Know Your Address) API，对区块链地址和交易进行风险评估。
+This Skill is used to call Beosin KYT (Know Your Transaction) and KYA (Know Your Address) API to perform risk assessment on blockchain addresses and transactions.
 
-## 触发场景
+## Trigger Scenarios
 
-当用户提及以下内容时，应使用此 Skill：
-- "评估这个地址的风险"
-- "检查这个交易是否有风险"
-- "KYT"、"KYA"
-- "Beosin 风险评估"
-- "区块链合规"、"AML"
-- "交易风险"、"地址风险"
+Use this Skill when users mention:
+- "Assess the risk of this address"
+- "Check if this transaction is risky"
+- "KYT", "KYA"
+- "Beosin risk assessment"
+- "Blockchain compliance", "AML"
+- "Transaction risk", "Address risk"
+- "Assess SHIB risk", "Check USDT address risk" (need to look up token address first)
 
-## 使用流程
+## Token Address Lookup
 
-### 步骤 1：获取 API 密钥
+When users ask about risk assessment for a token (such as SHIB, USDT, USDC, etc.), you must first look up the token contract address from the token address mapping file.
 
-首次使用时，直接提示用户输入 API 密钥：
+### Step 1: Look up token address
 
-```
-请提供您的 Beosin API 密钥：
-- APPID: [请在此输入您的 APPID]
-- APP-SECRET: [请在此输入您的 APP-SECRET]
-```
-
-⚠️ **重要：API 密钥通过 HTTP Header 传递，不是 URL 参数！**
-
-### 步骤 2：调用 Python 脚本（唯一推荐方式）
-
-**必须使用 `scripts/beosin_api.py` 脚本调用 API！** 不允许手动使用 curl 或创建临时脚本。
-
-调用示例：
+Call `scripts/txt` script or use the following Python command to look up token address:
 
 ```bash
-# 脚本路径：/Users/edy/Downloads/Skill/.trae/skills/beosin-kyt-risk-assessment/scripts/beosin_api.py
+# Method 1: Using script
+python scripts/txt get_address <chain> <token_symbol>
 
-# 地址风险评估
-python scripts/beosin_api.py --appid YOUR_APPID --secret YOUR_SECRET address-v4 79 地址
-
-# 存款交易评估
-python scripts/beosin_api.py --appid YOUR_APPID --secret YOUR_SECRET deposit-v4 1 交易哈希
-
-# 提款交易评估
-python scripts/beosin_api.py --appid YOUR_APPID --secret YOUR_SECRET withdraw-v4 1 交易哈希
+# Examples
+python scripts/txt get_address ETH SHIB
+python scripts/txt get_address BSC USDT
+python scripts/txt get_address SOLANA BONK
 ```
 
-### 步骤 3：调用 API 并生成报告（严格参考“输出格式要求”章节）
+Or directly read `scripts/currency_basket_output.json` file to look up token address.
 
-脚本执行后会直接输出格式化的风险评估结果，格式参考“输出格式要求”章节。：
+### Step 2: Confirm chain ID
 
+Based on the found token address format, confirm the chain and get the corresponding chainId:
 
-⚠️ **重要：必须使用 `scripts/beosin_api.py` 脚本调用 API！禁止使用 curl 命令或创建临时脚本！**
+| Chain Name | Chain ID | Token Address Pattern |
+|------|----------|--------------|
+| ETH | 1 | Starts with 0x, 42 chars |
+| BSC | 56 | Starts with 0x, 42 chars |
+| TRON | 79 | Starts with T, 34 chars |
+| POLYGON | 137 | Starts with 0x, 42 chars |
+| ARBITRUM | 42161 | Starts with 0x, 42 chars |
+| OPTIMISM | 10 | Starts with 0x, 42 chars |
+| SOLANA | solana | base58 encoded |
+| TON | ton | Starts with EQ |
 
-根据用户提供的参数类型，自动选择合适的 API 端点：
-- 提供 `address` → 调用地址风险评估 (KYA)
-- 提供交易 `hash` 且用户提及"存款"/"入金" → 调用存款交易风险评估 (KYT Deposit)
-- 提供交易 `hash` 且用户提及"提款"/"出金" → 调用提款交易风险评估 (KYT Withdraw)
+### Step 3: Call risk assessment API
 
-优先使用 V4 版本以获取更详细的实体信息和跳数数据。
+After finding the token address and chainId, use the above API calling workflow for risk assessment.
 
-#### API 端点参考（仅供查阅，脚本已封装）
+⚠️ **Important**:
+- If the user only provides token name (e.g., "SHIB") without address, you must first look up the token address
+- If the user asks about different chains (e.g., USDT on BSC vs USDT on ETH), clarify which chain
+- If the token doesn't exist on the current chain, inform the user and suggest other chains
 
-**地址风险评估 (KYA V4)**: `GET https://api.beosin.com/api/v4/kyt/address/risk`
+## Usage Workflow
 
-**存款交易风险评估 (KYT V4)**: `GET https://api.beosin.com/api/v4/kyt/tx/deposit`
+### Step 1: Get API keys
 
-**提款交易风险评估 (KYT V4)**: `GET https://api.beosin.com/api/v4/kyt/tx/withdraw`
+On first use, prompt the user for API keys:
 
-## 支持的区块链网络
+```
+Please provide your Beosin API keys:
+- APPID: [Enter your APPID here]
+- APP-SECRET: [Enter your APP-SECRET here]
+```
 
-Beosin API 支持以下区块链：
+⚠️ **Important: API keys are passed via HTTP Header, not URL parameters!**
 
-| Chain ID | 区块链 | 支持类型 |
+### Step 2: Call Python script (the only recommended method)
+
+**You must use `scripts/beosin_api.py` script to call the API!** Using curl or creating temporary scripts is not allowed.
+
+Examples:
+
+```bash
+# Script path: /Users/edy/Downloads/Skill/.trae/skills/beosin-kyt-risk-assessment/scripts/beosin_api.py
+
+# Address risk assessment
+python scripts/beosin_api.py --appid YOUR_APPID --secret YOUR_SECRET address-v4 79 address
+
+# Deposit transaction assessment
+python scripts/beosin_api.py --appid YOUR_APPID --secret YOUR_SECRET deposit-v4 1 tx_hash
+
+# Withdraw transaction assessment
+python scripts/beosin_api.py --appid YOUR_APPID --secret YOUR_SECRET withdraw-v4 1 tx_hash
+```
+
+### Step 3: Call API and generate report (strictly follow "Output Format Requirements" section)
+
+The script will directly output formatted risk assessment results after execution, format follows the "Output Format Requirements" section:
+
+⚠️ **Important: You must use `scripts/beosin_api.py` script to call the API! Using curl commands or creating temporary scripts is prohibited!**
+
+Based on the parameter type provided by the user, automatically select the appropriate API endpoint:
+- Provide `address` → Call address risk assessment (KYA)
+- Provide transaction `hash` and user mentions "deposit"/"deposit funds" → Call deposit transaction risk assessment (KYT Deposit)
+- Provide transaction `hash` and user mentions "withdraw"/"withdraw funds" → Call withdraw transaction risk assessment (KYT Withdraw)
+
+Use V4 version preferentially to get more detailed entity information and hop count data.
+
+#### API Endpoint Reference (for reference only, script already encapsulates)
+
+**Address Risk Assessment (KYA V4)**: `GET https://api.beosin.com/api/v4/kyt/address/risk`
+
+**Deposit Transaction Risk Assessment (KYT V4)**: `GET https://api.beosin.com/api/v4/kyt/tx/deposit`
+
+**Withdraw Transaction Risk Assessment (KYT V4)**: `GET https://api.beosin.com/api/v4/kyt/tx/withdraw`
+
+## Supported Blockchain Networks
+
+Beosin API supports the following blockchains:
+
+| Chain ID | Blockchain | Support Type |
 |----------|--------|----------|
 | 0 | BTC | Full Query |
 | 1 | ETH | Full Query |
@@ -109,14 +153,14 @@ Beosin API 支持以下区块链：
 | 42161 | Arbitrum | Full Query |
 | 10 | Optimism | Full Query |
 | 227 | LTC | Full Query |
-| aptos | Aptos | Full Query |
+| Aptos | Aptos | Full Query |
 | 8217 | Kaia | Full Query |
 | 4200 | Merlin | Basic Query |
-| solana | Solana | Full Query |
+| Solana | Solana | Full Query |
 | 888 | Neo | Basic Query |
-| ton | TON | Full Query |
+| TON | TON | Full Query |
 | 1030 | Conflux (eSpace) | Basic Query |
-| xrp | XRP | Full Query |
+| XRP | XRP | Full Query |
 | 324 | Zksync | Full Query |
 | 4689 | IoTeX | Full Query |
 | 810180 | Zklink | Basic Query |
@@ -124,241 +168,243 @@ Beosin API 支持以下区块链：
 | 2020 | Ronin | Basic Query |
 | 59144 | Linea | Basic Query |
 | 80084 | Berachain | Basic Query |
-| monad | Monad | Basic Query |
+| Monad | Monad | Basic Query |
 | 592 | Astar | Basic Query |
 | 167000 | Taiko | Basic Query |
 | 200901 | Bitlayer | Basic Query |
 | 54176 | Over | Basic Query |
-| aleo | Aleo | Basic Query |
-| avail | Avail | Basic Query |
-| kaska | Kaska | Basic Query |
-| movement | Movement | Basic Query |
-| sui | Sui | Basic Query |
+| Aleo | Aleo | Basic Query |
+| Avail | Avail | Basic Query |
+| Kaska | Kaska | Basic Query |
+| Movement | Movement | Basic Query |
+| Sui | Sui | Basic Query |
 | 255 | Kroma | Basic Query |
 | 8453 | Base | Basic Query |
-| tao | Tao | Basic Query |
+| Tao | Tao | Basic Query |
 | 48900 | ZRC | Basic Query |
-| tia |TIA | Basic Query |
-| peaq | Peaq | Basic Query |
+| TIA | TIA | Basic Query |
+| Peaq | Peaq | Basic Query |
 | 6 | Supra | Basic Query |
-| arweave | Arweave | Basic Query |
+| Arweave | Arweave | Basic Query |
 | 1329 | Sei | Basic Query |
 | 1111 | Wemix | Basic Query |
 | 17777 | Eos | Basic Query |
 | 994873017 | Lumia | Basic Query |
 | 177 | Hsk | Basic Query |
 | 88 | Viction | Basic Query |
-| ao | AO | Basic Query |
+| AO | AO | Basic Query |
 | 1514 | Story | Basic Query |
-| autonomys | Autonomys | Basic Query |
+| Autonomys | Autonomys | Basic Query |
 | 146 | Sonic | Basic Query |
-| nillion | Nillion | Basic Query |
-| babylon | Babylon | Basic Query |
+| Nillion | Nillion | Basic Query |
+| Babylon | Babylon | Basic Query |
 | 321 | KCC | Basic Query |
-| initiainitia | Initia | Basic Query |
+| Initia | Initia | Basic Query |
 | 4352 | Memecore | Basic Query |
 | 16661 | 0G | Basic Query |
 | 9745 | Plasma | Basic Query |
 
-**说明**：
-- Full Query：支持完整的风险评估数据查询
-- Basic Query：仅支持地址标签查询
+**Note**:
+- Full Query: Supports complete risk assessment data query
+- Basic Query: Only supports address tag query
 
-## 风险等级说明
+## Risk Level Description
 
-所有风险评估结果统一使用以下风险等级：
+All risk assessment results use the following unified risk levels:
 
-| 等级 | 说明 |
+| Level | Description |
 |------|------|
-| Severe | 严重风险 |
-| High | 高风险 |
-| Medium | 中风险 |
-| Low | 低风险 |
+| Severe | Severe risk |
+| High | High risk |
+| Medium | Medium risk |
+| Low | Low risk |
 
-## 响应字段说明
+## Response Field Description
 
-### 地址风险评估响应字段
+### Address Risk Assessment Response Fields
 
-| 字段 | 说明 |
+| Field | Description |
 |------|------|
-| score | 地址总分 (0-100) |
-| riskLevel | 风险等级 |
-| incomingScore | 入金风险评分 |
-| incomingLevel | 入金风险等级 |
-| outgoingScore | 出金风险评分 |
-| outgoingLevel | 出金风险等级 |
-| incomingDetail | 入金命中风险详情 |
-| outgoingDetail | 出金命中风险详情 |
-| entityDetails | 实体详情（V4新增） |
-| hops | 跳数（V4新增） |
+| score | Total address score (0-100) |
+| riskLevel | Risk level |
+| incomingScore | Incoming risk score |
+| incomingLevel | Incoming risk level |
+| outgoingScore | Outgoing risk score |
+| outgoingLevel | Outgoing risk level |
+| incomingDetail | Incoming risk hit details |
+| outgoingDetail | Outgoing risk hit details |
+| entityDetails | Entity details (V4 new) |
+| hops | Hop count (V4 new) |
 
-## 注意事项
+## Important Notes
 
-1. **API 密钥传递方式**：必须通过 HTTP Header 传递（`-H "APPID: xxx" -H "APP-SECRET: xxx"`），不是 URL 参数！
-2. **API 密钥安全**：不要在日志或公开场合暴露用户的 API 密钥
-3. **参数验证**：在调用 API 前验证地址格式和 chainId
-4. **错误处理**：遇到错误码时向用户解释原因并提供解决方案
-5. **响应时间**：风险评估接口响应时间可能较长（<30s），请告知用户耐心等待
-6. **V4 特性**：优先使用 V4 版本以获取更详细的实体信息和跳数数据
+1. **API key transmission**: Must be passed via HTTP Header (`-H "APPID: xxx" -H "APP-SECRET: xxx"`), not URL parameters!
+2. **API key security**: Do not expose user's API keys in logs or public places
+3. **Parameter validation**: Validate address format and chainId before calling API
+4. **Error handling**: Explain reasons to users and provide solutions when encountering error codes
+5. **Response time**: Risk assessment API response time may be long (<30s), please inform user to wait patiently
+6. **V4 features**: Use V4 version preferentially to get more detailed entity information and hop count data
 
-## 错误码处理
+## Error Code Handling
 
-| 错误码 | 说明 | 处理方式 |
+| Error Code | Description | Handling |
 |--------|------|----------|
-| 40001 | 参数错误 | 检查请求参数是否正确 |
-| 40002 | Empty appId | API 密钥未正确传递，请确认使用 HTTP Header 方式传递 APPID 和 APP-SECRET |
-| 40021 | 平台不支持 | 确认 chainId 是否在支持列表中 |
-| 40022 | 地址错误 | 检查地址格式是否正确 |
-| 40023 | 交易哈希错误 | 检查交易哈希格式 |
-| 41023 | 交易哈希不存在 | 确认交易是否已上链 |
-| 41024 | 不支持非 ERC-20 交易 | 确认代币类型 |
-| 41035 | 代币不在篮子中 | 该代币暂不支持 |
-| 41038 | 任务执行中 | 稍后重试 |
+| 40001 | Parameter error | Check if request parameters are correct |
+| 40002 | Empty appId | API key not passed correctly, confirm using HTTP Header method to pass APPID and APP-SECRET |
+| 40021 | Platform not supported | Confirm if chainId is in supported list |
+| 40022 | Address error | Check if address format is correct |
+| 40023 | Transaction hash error | Check transaction hash format |
+| 41023 | Transaction hash does not exist | Confirm if transaction is on-chain |
+| 41024 | Non ERC-20 transaction not supported | Confirm token type |
+| 41035 | Token not in basket | Token not currently supported |
+| 41038 | Task executing | Retry later |
 
-### 交易风险评估响应字段
+### Transaction Risk Assessment Response Fields
 
-| 字段 | 说明 |
+| Field | Description |
 |------|------|
-| score | 评分 |
-| riskLevel | 风险等级 |
-| risks | 命中风险列表 |
-| riskStrategy | 风险策略名称 |
-| exposure | 暴露类型 (Direct/Indirect) |
-| entityDetails | 实体详情 |
+| score | Score |
+| riskLevel | Risk level |
+| risks | Hit risk list |
+| riskStrategy | Risk strategy name |
+| exposure | Exposure type (Direct/Indirect) |
+| entityDetails | Entity details |
 
-## 风险分析解读框架
+## Risk Analysis Interpretation Framework
 
-您是一个反洗钱合规官助手，需要根据本次评估的结果（kyt_result、risk_level、risk_score）对生成的风险分析结果进行解读。
+You are an Anti-Money Laundering Compliance Officer assistant. You need to interpret the risk analysis results based on the assessment results (kyt_result, risk_level, risk_score).
 
-### 每次回复必须包含的内容
+### Required Content in Each Response
 
-#### 1. 免责声明（必须声明）
+#### 1. Disclaimer (must state)
 ```
-以下内容由AI提供，仅供参考。
+The following content is provided by AI for reference only.
 ```
 
-#### 2. 风险概述
-简要总结最值得关注的风险即可，如果存在风险标签（riskTagLevel/riskTagDetails），那么表明该地址即为风险实体，优先级最高。
+#### 2. Risk Overview
 
-#### 3. 风险缓解建议
-结合监管要求，提供给合规官合理的处置建议。
+Briefly summarize the most notable risks. If there are risk tags (riskTagLevel/riskTagDetails), then the address is a risk entity, highest priority.
 
-### 输出格式要求（强制）
+#### 3. Risk Mitigation Suggestions
 
-⚠️ **必须严格按照以下模板输出，禁止自由发挥或省略任何章节！**
+Combine regulatory requirements to provide compliance officers with reasonable handling suggestions.
 
-1. **重点信息用颜色区分**以增加可读性（使用 emoji 或 Markdown 格式）
-2. **规范标题等级的字体大小和段落间距**以增加可读性
-3. 使用清晰的层级结构：
-   - `#` 主标题
-   - `##` 二级标题  
-   - `###` 三级标题
-   - `-` 或 `*` 列表项
-4. **主要风险不同类型不要挤在同一行**，每种风险类型单独一行展示
+### Output Format Requirements (Mandatory)
 
-### 输出格式模板（地址风险评估）
+⚠️ **Must strictly follow the template below, no free formatting or omitting any sections!**
+
+1. **Use colors for key information** for readability (use emoji or Markdown formatting)
+2. **Standardize title hierarchy font size and paragraph spacing** for readability
+3. Use clear hierarchical structure:
+   - `#` Main title
+   - `##` Secondary title  
+   - `###` Tertiary title
+   - `-` or `*` List items
+4. **Don't squeeze different risk types on the same line**, display each risk type on a separate line
+
+### Output Format Template (Address Risk Assessment)
 
 ```markdown
-# 区块链地址风险评估报告
+# Blockchain Address Risk Assessment Report
 
 ---
 
-**以下内容由AI提供，仅供参考。**
+**The following content is provided by AI for reference only.**
 
-## 🏷️ 风险标签
+## 🏷️ Risk Tags
 
-> ⚠️ 该地址已被标记为风险实体！
+> ⚠️ This address has been tagged as a risk entity!
 
-| 标签类型 | 说明 |
+| Tag Type | Description |
 |----------|------|
-| [风险标签1] | [说明] |
-| [风险标签2] | [说明] |
+| [Risk Tag 1] | [Description] |
+| [Risk Tag 2] | [Description] |
 
-## 📋 评估概览
+## 📋 Assessment Overview
 
-| 项目 | 信息 |
+| Item | Information |
 |------|------|
-| 地址 | 0x... |
-| 链 | Ethereum |
-| 代币类型 | 原生代币 (ETH) / ERC-20 代币 / 其他 |
-| 风险评分 | XX |
-| 风险等级 | 🔴 Severe / 🟠 High / 🟡 Medium / 🟢 Low |
+| Address | 0x... |
+| Chain | Ethereum |
+| Token Type | Native Token (ETH) / ERC-20 Token / Other |
+| Risk Score | XX |
+| Risk Level | 🔴 Severe / 🟠 High / 🟡 Medium / 🟢 Low |
 
-## ⚠️ 风险概述
-### 风险实体详情
-- 风险评分: XX
-- 风险等级: [等级]
-- 风险标签：XX
+## ⚠️ Risk Overview
+### Risk Entity Details
+- Risk Score: XX
+- Risk Level: [Level]
+- Risk Tags: XX
 
-### 入金风险详情
-- 风险评分: XX
-- 风险等级: [等级]
-- 命中策略:
-  - [策略1]: 比例 XX%, 金额 $XX, 跳数 X
-  - [策略2]: 比例 XX%, 金额 $XX, 跳数 X
+### Incoming Risk Details
+- Risk Score: XX
+- Risk Level: [Level]
+- Hit Strategies:
+  - [Strategy 1]: Ratio XX%, Amount $XX, Hops X
+  - [Strategy 2]: Ratio XX%, Amount $XX, Hops X
 
-### 出金风险详情
-- 风险评分: XX
-- 风险等级: [等级]
-- 命中策略:
-  - [策略1]: 比例 XX%, 金额 $XX, 跳数 X
-  - [策略2]: 比例 XX%, 金额 $XX, 跳数 X
+### Outgoing Risk Details
+- Risk Score: XX
+- Risk Level: [Level]
+- Hit Strategies:
+  - [Strategy 1]: Ratio XX%, Amount $XX, Hops X
+  - [Strategy 2]: Ratio XX%, Amount $XX, Hops X
 
-## 💡 风险缓解建议
+## 💡 Risk Mitigation Suggestions
 
-1. [建议1]
-2. [建议2]
-3. [建议3]
+1. [Suggestion 1]
+2. [Suggestion 2]
+3. [Suggestion 3]
 
 ---
-*报告生成时间: YYYY-MM-DD HH:mm:ss*
+*Report generated at: YYYY-MM-DD HH:mm:ss*
 ```
 
-### 输出格式模板（交易风险评估）
+### Output Format Template (Transaction Risk Assessment)
 
 ```markdown
-# 区块链交易风险评估报告
+# Blockchain Transaction Risk Assessment Report
 
 ---
 
-**以下内容由AI提供，仅供参考。**
+**The following content is provided by AI for reference only.**
 
-## 📋 评估概览
+## 📋 Assessment Overview
 
-| 项目 | 信息 |
+| Item | Information |
 |------|------|
-| 交易哈希 | 0x... |
-| 链 | Ethereum |
-| 交易方向 | 存款 / 提款 |
-| 代币类型 | 原生代币 (ETH) / ERC-20 代币 / 其他 |
-| 风险评分 | XX |
-| 风险等级 | 🔴 Severe / 🟠 High / 🟡 Medium / 🟢 Low |
+| Transaction Hash | 0x... |
+| Chain | Ethereum |
+| Transaction Direction | Deposit / Withdraw |
+| Token Type | Native Token (ETH) / ERC-20 Token / Other |
+| Risk Score | XX |
+| Risk Level | 🔴 Severe / 🟠 High / 🟡 Medium / 🟢 Low |
 
-## ⚠️ 风险详情
+## ⚠️ Risk Details
 
-### 命中风险列表
+### Hit Risk List
 
-| 风险策略 | 风险等级 | 跳数 | 暴露类型 | 比例 | 金额 |
+| Risk Strategy | Risk Level | Hops | Exposure Type | Ratio | Amount |
 |----------|----------|------|----------|------|------|
-| [策略1] | [等级] | X | Direct/Indirect | XX% | $XX |
-| [策略2] | [等级] | X | Direct/Indirect | XX% | $XX |
+| [Strategy 1] | [Level] | X | Direct/Indirect | XX% | $XX |
+| [Strategy 2] | [Level] | X | Direct/Indirect | XX% | $XX |
 
-### 实体详情
+### Entity Details
 
-- [实体名称]: 跳数 X, 清洗金额 $XX, 清洗比例 XX%
+- [Entity Name]: Hops X, Wash Amount $XX, Wash Ratio XX%
 
-## 💡 风险缓解建议
+## 💡 Risk Mitigation Suggestions
 
-1. [建议1]
-2. [建议2]
-3. [建议3]
+1. [Suggestion 1]
+2. [Suggestion 2]
+3. [Suggestion 3]
 
 ---
-*报告生成时间: YYYY-MM-DD HH:mm:ss*
+*Report generated at: YYYY-MM-DD HH:mm:ss*
 ```
 
-## Windows 兼容性
+## Windows Compatibility
 
-此 Skill 使用 Python 脚本进行 API 调用，已处理跨平台兼容性，Windows 用户无需额外配置。
+This Skill uses Python scripts for API calls, cross-platform compatibility has been handled. Windows users don't need additional configuration.
 
-脚本会自动检测并适配 Windows/macOS/Linux 系统。
+The script will automatically detect and adapt to Windows/macOS/Linux systems.
